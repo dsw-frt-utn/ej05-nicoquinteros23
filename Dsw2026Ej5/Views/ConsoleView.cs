@@ -1,5 +1,7 @@
 ﻿namespace Dsw2026Ej5.Views;
 
+using Dsw2026Ej5.Domain;
+
 public class ConsoleView
 {
     private static List<VehiculoViewModel> _vehiculos = Controlador.GetVehiculos();
@@ -26,7 +28,7 @@ public class ConsoleView
             }
             else if (opcion == "2")
             {
-                Console.WriteLine("Agregando vehículo...");
+                AgregarVehiculo();
             }
         }
         while (opcion != "3");
@@ -131,6 +133,126 @@ public class ConsoleView
             Console.Write("|");
             CentrarTexto(vehiculo.GetKmARecorrer().ToString(), out l, ancho - 1, false);
             Console.Write("".PadRight(ancho - 1 - l));
+        }
+    }
+
+    private static void AgregarVehiculo()
+    {
+        LimpiarPantalla();
+        DibujarLinea();
+        CentrarTexto("Agregar Vehículo", out int _);
+        DibujarLinea();
+
+        string patente = LeerTextoObligatorio("Patente");
+        string marca = LeerTextoObligatorio("Marca");
+        string modelo = LeerTextoObligatorio("Modelo");
+        int anio = LeerEnteroObligatorio("Año");
+        double capacidadCarga = LeerDoubleObligatorio("Capacidad de carga");
+
+        List<string> codigosSucursales = Controlador.GetCodigosSucursales();
+        Console.WriteLine($"Sucursales disponibles: {string.Join(", ", codigosSucursales)}");
+        string sucursal = LeerTextoObligatorio("Sucursal (código)");
+
+        VehiculoTipo tipo = LeerTipoVehiculo();
+        double? kwhBase = null;
+        double? kilometrosPorLitro = null;
+        double? litrosExtra = null;
+
+        if (tipo == VehiculoTipo.Electrico)
+        {
+            kwhBase = LeerDoubleObligatorio("kWhBase");
+        }
+        else
+        {
+            kilometrosPorLitro = LeerDoubleObligatorio("Kilómetros por litro");
+            litrosExtra = LeerDoubleObligatorio("Litros extra");
+        }
+
+        (bool exito, string mensaje) = Controlador.AgregarVehiculo(
+            patente,
+            marca,
+            modelo,
+            anio,
+            capacidadCarga,
+            sucursal,
+            tipo,
+            kwhBase,
+            kilometrosPorLitro,
+            litrosExtra);
+
+        Console.WriteLine();
+        Console.WriteLine(mensaje);
+        if (exito)
+        {
+            _vehiculos = Controlador.GetVehiculos();
+        }
+
+        Console.WriteLine("Presione Enter para volver al menú...");
+        Console.ReadLine();
+    }
+
+    private static string LeerTextoObligatorio(string etiqueta)
+    {
+        string? valor;
+        do
+        {
+            Console.Write($"{etiqueta}: ");
+            valor = Console.ReadLine();
+            if (string.IsNullOrWhiteSpace(valor))
+            {
+                Console.WriteLine("El valor no puede estar vacío.");
+            }
+        } while (string.IsNullOrWhiteSpace(valor));
+
+        return valor.Trim();
+    }
+
+    private static int LeerEnteroObligatorio(string etiqueta)
+    {
+        while (true)
+        {
+            Console.Write($"{etiqueta}: ");
+            string? entrada = Console.ReadLine();
+            if (int.TryParse(entrada, out int valor))
+            {
+                return valor;
+            }
+            Console.WriteLine("Ingrese un número entero válido.");
+        }
+    }
+
+    private static double LeerDoubleObligatorio(string etiqueta)
+    {
+        while (true)
+        {
+            Console.Write($"{etiqueta}: ");
+            string? entrada = Console.ReadLine();
+            if (double.TryParse(entrada, out double valor))
+            {
+                return valor;
+            }
+            Console.WriteLine("Ingrese un número válido.");
+        }
+    }
+
+    private static VehiculoTipo LeerTipoVehiculo()
+    {
+        while (true)
+        {
+            Console.Write("Tipo de vehículo (1. Electrico / 2. Combustible): ");
+            string? entrada = Console.ReadLine();
+
+            if (entrada == "1")
+            {
+                return VehiculoTipo.Electrico;
+            }
+
+            if (entrada == "2")
+            {
+                return VehiculoTipo.Combustible;
+            }
+
+            Console.WriteLine("Tipo inválido. Ingrese 1 o 2.");
         }
     }
 }
